@@ -36,7 +36,21 @@ class UserProfileDialog extends ComponentDialog {
             //Demographics: age and gender
             this.askAge.bind(this),
             this.ageStep.bind(this),
-            this.confirmAgeStep.bind(this)
+            this.confirmAgeStep.bind(this),
+
+            this.askGender.bind(this),
+            this.checkGender.bind(this),
+
+            //preassessment
+            this.explainPreAssessment.bind(this),
+            this.preAssessment_1.bind(this),
+            this.preAssessment_2.bind(this),
+            this.preAssessment_3.bind(this),
+            this.preAssessment_4.bind(this),
+            this.preAssessment_5.bind(this)
+
+
+
 
             //this.summaryStep.bind(this)
         ]));
@@ -60,6 +74,114 @@ class UserProfileDialog extends ComponentDialog {
             await dialogContext.beginDialog(this.id);
         }
     }
+
+    async askAge(step) {
+        // WaterfallStep always finishes with the end of the Waterfall or with another dialog; here it is a Prompt Dialog.
+        return await step.prompt(CONFIRM_PROMPT, 'Do you want to give your age?', ['yes', 'no']);
+    }
+
+    async ageStep(step) {
+        if (step.result) {
+            // User said "yes" so we will be prompting for the age.
+            // WaterfallStep always finishes with the end of the Waterfall or with another dialog, here it is a Prompt Dialog.
+            const promptOptions = { prompt: 'Please enter your age.', retryPrompt: 'The value entered must be greater than 0 and less than 150.' };
+
+            return await step.prompt(NUMBER_PROMPT, promptOptions);
+        } else {
+            // User said "no" so we will skip the next step. Give -1 as the age.
+            return await step.next(-1);
+        }
+    }
+
+    async confirmAgeStep(step) {
+        step.values.age = step.result;
+
+        if(step.values.age == -1){
+            await step.context.sendActivity("You should provide your age to continue.");
+            return step.endDialog();
+        }
+        else if(step.values.age < 18){
+            await step.context.sendActivity("You are younger than 18!");
+            return await step.endDialog();
+        }
+        
+        const msg = `Thanks for providing your age!`;
+
+        // We can send messages to the user at any point in the WaterfallStep.
+        await step.context.sendActivity(msg);
+
+        // WaterfallStep always finishes with the end of the Waterfall or with another dialog, here it is a Prompt Dialog.
+        return await step.next();
+    }
+
+    async askGender(step) {
+        // WaterfallStep always finishes with the end of the Waterfall or with another dialog; here it is a Prompt Dialog.
+        // Running a prompt here means the next WaterfallStep will be run when the users response is received.
+        return await step.prompt(CHOICE_PROMPT, {
+            prompt: 'Please input your Gender.',
+            choices: ChoiceFactory.toChoices(['Female', 'Male', 'Other'])
+        });
+    }
+
+    async checkGender(step){
+        if(step.result.value == "Other"){
+            return await step.prompt(NAME_PROMPT, `Type in your gender`);
+        }
+        
+        return await step.next(step.result.value);
+    }
+
+    async explainPreAssessment(step){
+        step.values.gender = step.result.value;
+        await step.context.sendActivity(`PREASSESSMENT EXPLAINED!.`);
+        return await step.prompt(NAME_PROMPT, `Let's start?`);
+    }
+
+    async preAssessment_1(step){
+        if(step.result){
+            return await step.prompt(CHOICE_PROMPT, {
+                prompt: 'I consider myself to be an experienced technology user.',
+                choices: ChoiceFactory.toChoices(['Strongly Disagree', 'Slightly Disagree', 'Neither Agree nor Disagree', 'Slightly Agree', 'Strongly Agree'])
+            });
+        }
+        else {
+            return await step.endDialog();
+        }
+    }
+
+    async preAssessment_2(step){
+        await step.context.sendActivity(step.result.value);
+            return await step.prompt(CHOICE_PROMPT, {
+                prompt: 'I enjoy learning about new things using technology.',
+                choices: ChoiceFactory.toChoices(['Strongly Disagree', 'Slightly Disagree', 'Neither Agree nor Disagree', 'Slightly Agree', 'Strongly Agree'])
+            });
+    }
+
+    async preAssessment_3(step){
+        await step.context.sendActivity(step.result.value);
+            return await step.prompt(CHOICE_PROMPT, {
+                prompt: 'Music is important to me.',
+                choices: ChoiceFactory.toChoices(['Strongly Disagree', 'Slightly Disagree', 'Neither Agree nor Disagree', 'Slightly Agree', 'Strongly Agree'])
+            });    
+    }
+
+    async preAssessment_4(step){
+        await step.context.sendActivity(step.result.value);
+            return await step.prompt(CHOICE_PROMPT, {
+                prompt: 'I consider myself a fan of hip hop music.',
+                choices: ChoiceFactory.toChoices(['Strongly Disagree', 'Slightly Disagree', 'Neither Agree nor Disagree', 'Slightly Agree', 'Strongly Agree'])
+            });
+    }
+
+    async preAssessment_5(step){
+        await step.context.sendActivity(step.result.value);
+            return await step.prompt(CHOICE_PROMPT, {
+                prompt: 'I consider myself to be knowledgeable about hip hop history and/or culture.',
+                choices: ChoiceFactory.toChoices(['Strongly Disagree', 'Slightly Disagree', 'Neither Agree nor Disagree', 'Slightly Agree', 'Strongly Agree'])
+            });
+    }
+
+
 
     async transportStep(step) {
         // WaterfallStep always finishes with the end of the Waterfall or with another dialog; here it is a Prompt Dialog.
@@ -85,45 +207,7 @@ class UserProfileDialog extends ComponentDialog {
         return await step.prompt(CONFIRM_PROMPT, 'Do you want to give your age?', ['yes', 'no']);
     }
 
-    async askAge(step) {
-        // WaterfallStep always finishes with the end of the Waterfall or with another dialog; here it is a Prompt Dialog.
-        return await step.prompt(CONFIRM_PROMPT, 'Do you want to give your age?', ['yes', 'no']);
-    }
-
-    async ageStep(step) {
-        if (step.result) {
-            // User said "yes" so we will be prompting for the age.
-            // WaterfallStep always finishes with the end of the Waterfall or with another dialog, here it is a Prompt Dialog.
-            const promptOptions = { prompt: 'Please enter your age.', retryPrompt: 'The value entered must be greater than 0 and less than 150.' };
-
-            return await step.prompt(NUMBER_PROMPT, promptOptions);
-        } else {
-            // User said "no" so we will skip the next step. Give -1 as the age.
-            return await step.next(-1);
-        }
-    }
-
-    async confirmAgeStep(step) {
-        step.values.age = step.result;
-
-        if(step.values.age == -1){
-            await step.context.sendActivity("You should provide your age to continue");
-            return step.endDialog();
-        }
-        else if(step.values.age < 18){
-            await step.context.sendActivity("You are younger than 18!");
-            return await step.endDialog();
-        }
-        
-        const msg = `I have your age as ${ step.values.age }.`;
-
-        // We can send messages to the user at any point in the WaterfallStep.
-        await step.context.sendActivity(msg);
-
-        // WaterfallStep always finishes with the end of the Waterfall or with another dialog, here it is a Prompt Dialog.
-        return await step.prompt(CONFIRM_PROMPT, { prompt: 'Is this okay?' });
-    }
-
+    
     async summaryStep(step) {
         if (step.result) {
             // Get the current profile object from user state.
@@ -132,6 +216,7 @@ class UserProfileDialog extends ComponentDialog {
             userProfile.transport = step.values.transport;
             userProfile.name = step.values.name;
             userProfile.age = step.values.age;
+            userProfile.gender = step.values.gender;
 
             let msg = `I have your mode of transport as ${ userProfile.transport } and your name as ${ userProfile.name }.`;
             if (userProfile.age !== -1) {
