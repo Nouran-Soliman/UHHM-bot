@@ -12,10 +12,8 @@ const {
     TextPrompt,
     WaterfallDialog
 } = require('botbuilder-dialogs');
-const { ActionTypes, ActivityHandler, CardFactory } = require('botbuilder');
 const { UserProfile } = require('../userProfile');
 
-const WELCOMED_USER = 'welcomedUserProperty';
 const CHOICE_PROMPT = 'CHOICE_PROMPT';
 const CONFIRM_PROMPT = 'CONFIRM_PROMPT';
 const NAME_PROMPT = 'NAME_PROMPT';
@@ -35,12 +33,12 @@ class UserProfileDialog extends ComponentDialog {
         this.addDialog(new NumberPrompt(NUMBER_PROMPT, this.agePromptValidator));
 
         this.addDialog(new WaterfallDialog(WATERFALL_DIALOG, [
-            this.transportStep.bind(this),
-            this.nameStep.bind(this),
-            this.nameConfirmStep.bind(this),
+            //Demographics: age and gender
+            this.askAge.bind(this),
             this.ageStep.bind(this),
-            this.confirmStep.bind(this),
-            this.summaryStep.bind(this)
+            this.confirmAgeStep.bind(this)
+
+            //this.summaryStep.bind(this)
         ]));
 
         this.initialDialogId = WATERFALL_DIALOG;
@@ -87,6 +85,11 @@ class UserProfileDialog extends ComponentDialog {
         return await step.prompt(CONFIRM_PROMPT, 'Do you want to give your age?', ['yes', 'no']);
     }
 
+    async askAge(step) {
+        // WaterfallStep always finishes with the end of the Waterfall or with another dialog; here it is a Prompt Dialog.
+        return await step.prompt(CONFIRM_PROMPT, 'Do you want to give your age?', ['yes', 'no']);
+    }
+
     async ageStep(step) {
         if (step.result) {
             // User said "yes" so we will be prompting for the age.
@@ -100,10 +103,19 @@ class UserProfileDialog extends ComponentDialog {
         }
     }
 
-    async confirmStep(step) {
+    async confirmAgeStep(step) {
         step.values.age = step.result;
 
-        const msg = step.values.age === -1 ? 'No age given.' : `I have your age as ${ step.values.age }.`;
+        if(step.values.age == -1){
+            await step.context.sendActivity("You should provide your age to continue");
+            return step.endDialog();
+        }
+        else if(step.values.age < 18){
+            await step.context.sendActivity("You are younger than 18!");
+            return await step.endDialog();
+        }
+        
+        const msg = `I have your age as ${ step.values.age }.`;
 
         // We can send messages to the user at any point in the WaterfallStep.
         await step.context.sendActivity(msg);
@@ -142,3 +154,7 @@ class UserProfileDialog extends ComponentDialog {
 }
 
 module.exports.UserProfileDialog = UserProfileDialog;
+
+
+
+

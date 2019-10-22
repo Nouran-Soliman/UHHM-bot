@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 const { ActivityHandler } = require('botbuilder');
+var wel = false;
 
 class DialogBot extends ActivityHandler {
     /**
@@ -20,18 +21,30 @@ class DialogBot extends ActivityHandler {
         this.userState = userState;
         this.dialog = dialog;
         this.dialogState = this.conversationState.createProperty('DialogState');
+     
 
         this.onMembersAdded(async (context, next) => {
             console.log('Running dialog with Message Activity.');
 
             // Run the Dialog with the new message Activity.
-            await this.dialog.run(context, this.dialogState);
+            wel = false;
+            for (const idx in context.activity.membersAdded) {
+                if (context.activity.membersAdded[idx].id !== context.activity.recipient.id) {
+                    await context.sendActivity(`Welcome 1`);
+                    await context.sendActivity(`Welcome 2`);
+                    wel = true;
+                }
+            }
 
+         
             await next();
         });
 
         this.onDialog(async (context, next) => {
             // Save any state changes. The load happened during the execution of the Dialog.
+            if(wel){
+                await this.dialog.run(context, this.dialogState);
+            }
             await this.conversationState.saveChanges(context, false);
             await this.userState.saveChanges(context, false);
             await next();
